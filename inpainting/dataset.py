@@ -15,11 +15,19 @@ from skimage import io, transform
 from config import *
 
 class Manga109(Data.Dataset):
-    def __init__(self, mode, root_dir, mask_dir, transform=None, target_transform=None):
+    def __init__(self, mode, root_dir, mask_dir,
+     target_dir=None, line_dir=None,
+     image_transform=None, target_transform=None,
+     singletrans=None):
+
         self.matches = []
         self.mask_dir = mask_dir
-        self.transform = transform
+        self.line_dir = line_dir
+        self.target_dir = target_dir
+        self.transform = image_transform
         self.target_transform = target_transform
+        self.singletrans = singletrans
+
         self.mode = mode
         self.root_dir = root_dir
         count = 0
@@ -39,20 +47,37 @@ class Manga109(Data.Dataset):
     def __getitem__(self, index):
         img_name = os.path.join(self.root_dir,
                                 self.matches[index])
-        mask_name = os.path.join(self.mask_dir,os.path.basename(img_name))
+        mask_name = os.path.join(self.mask_dir, FileName(self.matches[index], '.png'))
+        target_name = os.path.join(self.target_dir, FileName(self.matches[index], '.png'))
+
         self.mask = PIL.Image.open(mask_name).convert('L')
         self.image = PIL.Image.open(img_name).convert('RGB')
-        self.imgshape = torch.Tensor(np.asarray(self.image.shape))
-
-        if CUDA:
-            self.imgshape = self.imgshape.cuda()
+        self.target_image = PIL.Image.open(target_name).convert('RGB')
+ 
+        line_name = os.path.join(self.line_dir, FileName(self.matches[index], '.png'))
+        self.line = PIL.Image.open(line_name).convert('L')
+        self.line = self.singletrans(self.line)
 
         if self.transform:
             self.image = self.transform(self.image)
-            self.mask = self.transform(self.mask)
-            self.target_image = self.target_transform(self.image)
+            self.mask = self.singletrans(self.mask)
+            self.target_image = self.target_transform(self.target_image)
+            
+            #print(np.array(self.image).transpose(1,2,0).shape, np.array(self.mask).shape)
 
-        return self.image, self.target_image, self.mask
+            self.train_data = cv2.merge((np.array(self.image).transpose(1,2,0),
+                                         np.array(self.line).transpose(1,2,0), 
+                                         np.array(self.mask).transpose(1,2,0)
+                                         ))
+            if CUDA:
+                self.train_data = torch.FloatTensor(self.train_data.transpose((2, 0, 1))).cuda()
+            else:
+                self.train_data = torch.FloatTensor(self.train_data.transpose((2, 0, 1)))
+
+        if self.mode == 'train':
+            return self.train_data, self.target_image, self.mask, self.line
+
+        return self.train_data, self.target_image, self.mask, self.line
 
 class InPaintLoader:
     def __init__(self, mode):
@@ -69,13 +94,32 @@ class InPaintLoader:
             standard_transforms.Normalize(*mean_std)
         ])
 
+        self.singlelayer_transform = standard_transforms.Compose([
+            standard_transforms.CenterCrop(IMGSIZE),
+            standard_transforms.ToTensor(),
+            #standard_transforms.Lambda(lambda x: x.mul_(255)),
+        ])
+
+        self.singlelayer_test =  standard_transforms.Compose([
+            SingleResize(),
+            standard_transforms.ToTensor(),
+            #standard_transforms.Lambda(lambda x: x.mul_(255)),
+        ])
+
         self.target_transform = standard_transforms.Compose([
             standard_transforms.CenterCrop(IMGSIZE),
             FlipChannels(),
             standard_transforms.ToTensor()
         ])
 
+        self.target_test =  standard_transforms.Compose([
+            SingleResize(),
+            FlipChannels(),
+            standard_transforms.ToTensor()
+        ])
+
         self.test_transform = standard_transforms.Compose([
+            SingleResize(),
             FlipChannels(),
             standard_transforms.ToTensor(),
             standard_transforms.Lambda(lambda x: x.mul_(255)),
@@ -90,19 +134,31 @@ class InPaintLoader:
         ])
 
         if self.mode == 'train':
-            train_dataset = Manga109(self.mode, './dataset/train/', self.transform, self.target_transform)
+            train_dataset = Manga109(self.mode, INPUT, MASKDIR, target_dir=OUTPUT,
+                line_dir=ROOTDIR, image_transform=self.transform, target_transform=self.target_transform,
+                singletrans=self.singlelayer_transform)
+
             self.train_loader = Data.DataLoader(
                 train_dataset,
                 batch_size=BATCH_SIZE,
                 shuffle=True,
                 num_workers=0
             )
+            self.length = len(self.train_loader)
 
         elif self.mode == 'test':
             if TEST_BATCH_SIZE == 1:
-                test_dataset = Manga109(self.mode, './data/input/', self.test_transform)
+                test_dataset = Manga109(self.mode, T_INPUT, T_MASKDIR,
+                    target_dir=T_OUTPUT, line_dir=T_ROOTDIR, 
+                    image_transform=self.test_transform,
+                    singletrans=self.singlelayer_test,
+                    target_transform=self.target_test)
             else:
-                test_dataset = Manga109(self.mode, './data/valid/', self.transform)
+                test_dataset = Manga109(self.mode, T_INPUT, T_MASKDIR, 
+                    target_dir=T_OUTPUT, line_dir=T_ROOTDIR,
+                    image_transform=self.transform,
+                    singletrans=self.singlelayer_transform,
+                    target_transform=self.target_transform)
 
             self.test_loader = Data.DataLoader(
                 test_dataset,
@@ -110,3 +166,4 @@ class InPaintLoader:
                 shuffle=False,
                 num_workers=0
             )
+            self.length = len(self.test_loader)            

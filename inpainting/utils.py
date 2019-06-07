@@ -1,18 +1,24 @@
 import os
-import numpy as np
 import time
 import torch
 from random import randint
 import cv2
 from PIL import Image
 
+import numpy as np
+
 IMG = 0
 PATH_COLOR = -1
 PATH_GRAY = 1
 start_time = 0
 
+def realSize(size):
+    return (size[0] - size[0]%4, size[1] - size[1]%4)
+
 class FlipChannels(object):
     def __call__(self, img):
+        if len(img.size) != 3:
+            return img
         img = np.array(img)[:, :, ::-1]
         return Image.fromarray(img.astype(np.uint8))
 
@@ -25,6 +31,18 @@ class DeNormalize(object):
         for t, m, s in zip(tensor, self.mean, self.std):
             t.mul_(s).add_(m)
         return tensor
+        
+class SingleResize(object):
+    def __call__(self, img):
+        img = np.array(img)
+        newshape = realSize(img.shape[0:2])
+        img = cv2.resize(img, newshape)
+        return Image.fromarray(img.astype(np.uint8))
+
+def SaveFirstImage(tensor, path='./test.png'):
+    img = tensor[0].cpu().detach().numpy().transpose(1,2,0)
+    cv2.imwrite(path, np.uint8(img*255))
+    return
 
 def Hex2RGB(strInput):
     return tuple(int(strInput[i:i + 2], 16) for i in (0, 2, 4))
@@ -62,6 +80,7 @@ def clock(notice):
         print(notice, 1000*(time.time() - start_time), "ms")
     
     start_time = time.time()
+
 
 def Erosion(imgPath, kernalSize, mode):
     img = GetImg(imgPath, mode)
