@@ -1,13 +1,14 @@
 
-EPOCH = 1
+EPOCH = 10
 LR = 1e-4
 BATCH_SIZE = 4
-TEST_BATCH_SIZE = 1
+TEST_BATCH_SIZE = 4
 IMGSIZE = (512, 512)
 #Test with gaobr result.
 GABOR = True
-FILENUM = 200
+FILENUM = 1000
 CUDA = True
+TEST_MODE = False
 
 #Train
 ROOTDIR = './data/rawdata/'

@@ -6,10 +6,10 @@ from config import *
 getdir = './data0/line/'
 line_dir = './data0/line/'
 npy_dir = './data0/seg/2/'
-already = 377
+already = 0
 
 if GABOR:
-    getdir = '../../PCA/PCAresult/'
+    getdir = '../../PCAresult/'
 
 if __name__ == "__main__":
     clock('start')
@@ -30,19 +30,22 @@ if __name__ == "__main__":
             continue
         filled_img = GetImg(filename, PATH_COLOR)
         if GABOR:
-            lineImg = GetImg(line_matches[step], PATH_COLOR)
+            lineImg = cv2.resize(GetImg(line_matches[step], PATH_COLOR),
+                                 filled_img.shape[0:2][::-1])
             _,lineImg = cv2.threshold(lineImg,220,255,cv2.THRESH_BINARY)
             filled_img[lineImg<0.1] = 0
             cv2.imwrite(OUTPUT + "{:04d}.png".format(step), filled_img)
+            mask_img =  cv2.resize((255 - GetImg(line_matches[step], PATH_GRAY).astype(float))/255,
+                                    filled_img.shape[0:2][::-1])
 
         if GABOR  == False:
             cv2.imwrite(ROOTDIR + "{:04d}.png".format(step), filled_img)
             _,filled_img = cv2.threshold(filled_img,220,255,cv2.THRESH_BINARY)
             filled_img = FloodFill(filled_img, 8, IMG)
             cv2.imwrite(OUTPUT + "{:04d}.png".format(step), filled_img)
+            mask_img = (255 - GetImg(filename, PATH_GRAY).astype(float))/255
 
-
-        mask_img = (255 - GetImg(filename, PATH_GRAY).astype(float))/255
+        
         mask_img = Dilation(mask_img, 7, IMG)
         filled_img[mask_img>0.1] = 255
         mask_img[mask_img>0.1] = 1

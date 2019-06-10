@@ -90,8 +90,8 @@ class InPaintLoader:
             standard_transforms.CenterCrop(IMGSIZE),
             FlipChannels(),
             standard_transforms.ToTensor(),
-            standard_transforms.Lambda(lambda x: x.mul_(255)),
-            standard_transforms.Normalize(*mean_std)
+            #standard_transforms.Lambda(lambda x: x.mul_(255)),
+            #standard_transforms.Normalize(*mean_std)
         ])
 
         self.singlelayer_transform = standard_transforms.Compose([

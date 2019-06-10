@@ -12,8 +12,13 @@ PATH_COLOR = -1
 PATH_GRAY = 1
 start_time = 0
 
+def getResultPic(line, image):
+    line = cv2.resize(line, image[0:2][::-1], interpolation=cv2.INTER_NEAREST)
+    image[line < 0.1] = 0
+    return image
+
 def realSize(size):
-    return (size[0] - size[0]%4, size[1] - size[1]%4)
+    return (size[0] - size[0]%16, size[1] - size[1]%16)
 
 class FlipChannels(object):
     def __call__(self, img):
