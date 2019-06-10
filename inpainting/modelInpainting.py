@@ -70,8 +70,10 @@ class doubleConv(torch.nn.Module):
         super(doubleConv, self).__init__()
         self.conv = nn.Sequential(
             nn.Conv2d(input_, output, 3, 1, 1),
+            #nn.InstanceNorm2d(output, track_running_stats=False),
             nn.ReLU(True),
             nn.Conv2d(output, output, 3, 1, 1),
+            #nn.InstanceNorm2d(output, track_running_stats=False),
             nn.ReLU(True),
         )
     def forward(self, x):
@@ -96,8 +98,10 @@ class Unet(torch.nn.Module):
         )
         self.downscale4 = nn.Sequential(
             nn.MaxPool2d(2),
+            doubleConv(512, 512)
         )
         #upscale part.
+        self.upscale1 = nn.ConvTranspose2d(512, 512, 4, 2, 1)
         self.conv2 = doubleConv(1024, 512)
         self.upscale2 = nn.ConvTranspose2d(512, 256, 4, 2, 1)
         self.conv3 = doubleConv(512, 256)
