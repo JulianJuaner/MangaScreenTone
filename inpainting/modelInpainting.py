@@ -1,15 +1,22 @@
 from dataset import *
 import torch.nn as nn
+import networkUtil
 
+BLOCKS = 6
 
-BLOCKS = 8
+class ResNetModel(torch.nn.Module):
+    def __init__(self):
+        super(ResNetModel, self).__init__()
+        self.network = networkUtil.define_G(6, 3, 64, 'resnet_6blocks', norm='instance')
+    def forward(self, x):
+        return self.network(x)
 
 class InpaintModel(torch.nn.Module):
     def __init__(self):
         super(InpaintModel, self).__init__()
         self.encoder = nn.Sequential(
             nn.ReflectionPad2d(3),
-            nn.Conv2d(in_channels=5, out_channels=64, kernel_size=7, padding=0),
+            nn.Conv2d(in_channels=6, out_channels=64, kernel_size=7, padding=0),
             nn.InstanceNorm2d(64, track_running_stats=False),
             nn.ReLU(True),
             nn.ReflectionPad2d(1),
@@ -83,7 +90,7 @@ class Unet(torch.nn.Module):
     def __init__(self):
         super(Unet, self).__init__()
         #downscalepart.
-        self.conv1 = doubleConv(5, 64)
+        self.conv1 = doubleConv(6, 64)
         self.downscale1 = nn.Sequential(
             nn.MaxPool2d(2),
             doubleConv(64, 128)

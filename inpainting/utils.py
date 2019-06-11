@@ -12,6 +12,8 @@ PATH_COLOR = -1
 PATH_GRAY = 1
 start_time = 0
 
+
+
 def getResultPic(line, image):
     line = cv2.resize(line, image[0:2][::-1], interpolation=cv2.INTER_NEAREST)
     image[line < 0.1] = 0
@@ -26,6 +28,13 @@ class FlipChannels(object):
             return img
         img = np.array(img)[:, :, ::-1]
         return Image.fromarray(img.astype(np.uint8))
+
+class Binarize(object):
+    def __call__(self, img):
+        img = np.array(img)
+        _, img = cv2.threshold(img,220,255,cv2.THRESH_BINARY)
+        #print(img)
+        return Image.fromarray((img).astype(np.uint8))
 
 class DeNormalize(object):
     def __init__(self, mean, std):

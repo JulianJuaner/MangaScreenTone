@@ -6,10 +6,12 @@ from config import *
 getdir = './data0/line/'
 line_dir = './data0/line/'
 npy_dir = './data0/seg/2/'
+screentone_dir = './data0/imgs/'
 already = 0
 
 if GABOR:
     getdir = '../../PCAresult/'
+
 
 if __name__ == "__main__":
     clock('start')
@@ -23,7 +25,12 @@ if __name__ == "__main__":
 
     name_matches = loadImages(getdir)
     line_matches = loadImages(line_dir)
+    img_matches = loadImages(screentone_dir)
     file_iter = tqdm(name_matches)
+
+    name_matches.sort()
+    line_matches.sort()
+    img_matches.sort()
 
     for step, (filename) in enumerate(file_iter):
         if step < already:
@@ -39,6 +46,8 @@ if __name__ == "__main__":
                                     filled_img.shape[0:2][::-1])
 
         if GABOR  == False:
+            print(img_matches[step])
+            cv2.imwrite(SCTDIR + "{:04d}.png".format(step), GetImg(img_matches[step], PATH_GRAY))
             cv2.imwrite(ROOTDIR + "{:04d}.png".format(step), filled_img)
             _,filled_img = cv2.threshold(filled_img,220,255,cv2.THRESH_BINARY)
             filled_img = FloodFill(filled_img, 8, IMG)

@@ -13,7 +13,11 @@ def train(dataloader, testloader):
     best_acc = 0.0
 
     NN = Unet()
-    NN.load_state_dict(torch.load('./model/inpainting.pkl'))
+    if LOSS_OVERALL:
+        NN.load_state_dict(torch.load('./model/inpainting.pkl'))
+    #else:
+        #NN.load_state_dict(torch.load('./model/inpaintingmask.pkl'))
+
     if CUDA:
         NN.cuda()
 
@@ -34,11 +38,16 @@ def train(dataloader, testloader):
 
             SaveFirstImage(imgs[:, 0:3, :,:], './test/input.png')
             output = NN(imgs)
-            loss = loss1.forward(output, target_images, mask, line)
+            loss, _ = loss1.forward(output, target_images, mask, line, inputs = imgs)
 
             output = 0
             print(loss.item())
             writer.add_scalar('data/loss', loss.item(), iteration)
+
+            if not LOSS_OVERALL:
+                print('overall', _.item())
+                writer.add_scalar('data/overallLoss', _.item(), iteration)
+
             iteration += 1
 
             enoptimizer.zero_grad()
@@ -50,12 +59,16 @@ def train(dataloader, testloader):
         epoch_loss = running_loss / dataloader.length
     
         print('\ntrain epoch Loss: {:.4f} '.format(epoch_loss))
-        torch.save(NN.state_dict(), './model/inpainting.pkl')
+
+        if LOSS_OVERALL:
+            torch.save(NN.state_dict(), './model/inpainting.pkl')
+        else:
+            torch.save(NN.state_dict(), './model/inpaintingmask.pkl')
 
         for test_step, (imgs, target_images, mask, line) in enumerate(tqdm(testloader.test_loader)):
             running_loss = 0.0
             output = NN(imgs)
-            loss = loss1.forward(output, target_images, mask, line)
+            loss, _ = loss1.forward(output, target_images, mask, line, inputs = imgs)
             running_loss += loss.item() * imgs.size(0)
             print("test_loss: {:.4f}".format(running_loss / testloader.length))
             writer.add_scalar('test/loss', loss.item(), iterationt)
@@ -64,7 +77,7 @@ def train(dataloader, testloader):
 
             for step, (img) in enumerate(resultI):
                 cv2.imwrite('./data/out/{:02d}resultI.jpg'.format(test_step), np.uint8(img*255))
-                writer.add_image(np.uint8(img*255), 'test_result', step)
+                #writer.add_image(np.uint8(img*255), 'test_result', step)
 
     writer.export_scalars_to_json("./test.json")
     writer.close()
@@ -80,7 +93,7 @@ def test(testloader):
     for test_step, (imgs, target_images, mask, line) in enumerate(tqdm(testloader.test_loader)):
         running_loss = 0.0
         output = NN(imgs)
-        loss = loss1.forward(output, target_images, mask, line)
+        loss, _ = loss1.forward(output, target_images, mask, line, inputs = imgs)
         running_loss += loss.item() * imgs.size(0)
         print("test_loss: {:.4f}".format(running_loss / testloader.length))
         writer.add_scalar('test/loss', loss.item(), iterationt)

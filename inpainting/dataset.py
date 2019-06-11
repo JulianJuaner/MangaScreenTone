@@ -16,7 +16,7 @@ from config import *
 
 class Manga109(Data.Dataset):
     def __init__(self, mode, root_dir, mask_dir,
-     target_dir=None, line_dir=None,
+     target_dir=None, line_dir=None, sct_dir=None,
      image_transform=None, target_transform=None,
      singletrans=None):
 
@@ -24,6 +24,7 @@ class Manga109(Data.Dataset):
         self.mask_dir = mask_dir
         self.line_dir = line_dir
         self.target_dir = target_dir
+        self.sct_dir = sct_dir
         self.transform = image_transform
         self.target_transform = target_transform
         self.singletrans = singletrans
@@ -49,6 +50,7 @@ class Manga109(Data.Dataset):
                                 self.matches[index])
         mask_name = os.path.join(self.mask_dir, FileName(self.matches[index], '.png'))
         target_name = os.path.join(self.target_dir, FileName(self.matches[index], '.png'))
+        screentone_name = os.path.join(self.sct_dir, FileName(self.matches[index], '.png'))
 
         self.mask = PIL.Image.open(mask_name).convert('L')
         self.image = PIL.Image.open(img_name).convert('RGB')
@@ -62,12 +64,18 @@ class Manga109(Data.Dataset):
             self.image = self.transform(self.image)
             self.mask = self.singletrans(self.mask)
             self.target_image = self.target_transform(self.target_image)
+
+            self.screentone = Image.fromarray(cv2.resize(GetImg(screentone_name, PATH_GRAY),
+                                             np.array(self.image).shape[0:2]))
+            self.screentone = self.singletrans(self.screentone)
+
             
             #print(np.array(self.image).transpose(1,2,0).shape, np.array(self.mask).shape)
 
             self.train_data = cv2.merge((np.array(self.image).transpose(1,2,0),
                                          np.array(self.line).transpose(1,2,0), 
-                                         np.array(self.mask).transpose(1,2,0)
+                                         np.array(self.mask).transpose(1,2,0),
+                                         np.array(self.screentone).transpose(1,2,0)
                                          ))
             if CUDA:
                 self.train_data = torch.FloatTensor(self.train_data.transpose((2, 0, 1))).cuda()
@@ -96,12 +104,14 @@ class InPaintLoader:
 
         self.singlelayer_transform = standard_transforms.Compose([
             standard_transforms.CenterCrop(IMGSIZE),
+            Binarize(),
             standard_transforms.ToTensor(),
             #standard_transforms.Lambda(lambda x: x.mul_(255)),
         ])
 
         self.singlelayer_test =  standard_transforms.Compose([
             SingleResize(),
+            Binarize(),
             standard_transforms.ToTensor(),
             #standard_transforms.Lambda(lambda x: x.mul_(255)),
         ])
@@ -134,7 +144,7 @@ class InPaintLoader:
         ])
 
         if self.mode == 'train':
-            train_dataset = Manga109(self.mode, INPUT, MASKDIR, target_dir=OUTPUT,
+            train_dataset = Manga109(self.mode, INPUT, MASKDIR, target_dir=OUTPUT, sct_dir=SCTDIR,
                 line_dir=ROOTDIR, image_transform=self.transform, target_transform=self.target_transform,
                 singletrans=self.singlelayer_transform)
 
@@ -149,13 +159,13 @@ class InPaintLoader:
         elif self.mode == 'test':
             if TEST_BATCH_SIZE == 1:
                 test_dataset = Manga109(self.mode, T_INPUT, T_MASKDIR,
-                    target_dir=T_OUTPUT, line_dir=T_ROOTDIR, 
+                    target_dir=T_OUTPUT, line_dir=T_ROOTDIR, sct_dir=T_SCTDIR,
                     image_transform=self.test_transform,
                     singletrans=self.singlelayer_test,
                     target_transform=self.target_test)
             else:
                 test_dataset = Manga109(self.mode, T_INPUT, T_MASKDIR, 
-                    target_dir=T_OUTPUT, line_dir=T_ROOTDIR,
+                    target_dir=T_OUTPUT, line_dir=T_ROOTDIR, sct_dir=T_SCTDIR,
                     image_transform=self.transform,
                     singletrans=self.singlelayer_transform,
                     target_transform=self.target_transform)
