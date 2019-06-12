@@ -15,8 +15,8 @@ def train(dataloader, testloader):
     NN = Unet()
     if LOSS_OVERALL:
         NN.load_state_dict(torch.load('./model/inpainting.pkl'))
-    #else:
-        #NN.load_state_dict(torch.load('./model/inpaintingmask.pkl'))
+    else:
+        NN.load_state_dict(torch.load('./model/inpaintingmask.pkl'))
 
     if CUDA:
         NN.cuda()
@@ -35,10 +35,11 @@ def train(dataloader, testloader):
         clock('EPCOH: {}/{}'.format(epoch + 1, EPOCH))
 
         for step, (imgs, target_images, mask, line) in enumerate(tqdm(dataloader.train_loader)):
+            if iteration%10 == 0:
+                SaveFirstImage(imgs[:, 0:3, :,:], './test/input.png')
 
-            SaveFirstImage(imgs[:, 0:3, :,:], './test/input.png')
             output = NN(imgs)
-            loss, _ = loss1.forward(output, target_images, mask, line, inputs = imgs)
+            loss, _ = loss1.forward(output, target_images, mask, line, iteration, inputs = imgs)
 
             output = 0
             print(loss.item())
@@ -85,33 +86,33 @@ def train(dataloader, testloader):
 def test(testloader):
     iterationt = 0
     NN = Unet()
-    NN.load_state_dict(torch.load('./model/inpainting.pkl'))
+    NN.load_state_dict(torch.load('./model/inpaintingmask.pkl'))
     if CUDA:
         NN.cuda()
-    loss1 = MaskLossFunc()
     
-    for test_step, (imgs, target_images, mask, line) in enumerate(tqdm(testloader.test_loader)):
-        running_loss = 0.0
+    for test_step, (imgs, mask, line) in enumerate(tqdm(testloader.valid_loader)):
         output = NN(imgs)
-        loss, _ = loss1.forward(output, target_images, mask, line, inputs = imgs)
-        running_loss += loss.item() * imgs.size(0)
-        print("test_loss: {:.4f}".format(running_loss / testloader.length))
-        writer.add_scalar('test/loss', loss.item(), iterationt)
-        iterationt+=1
+        m = imgs[:,0:3,:,:].clone()
+        for i in range(3):
+            output[:,i,:,:].unsqueeze(1)[mask<0.1] = 0
+            output[:,i,:,:].unsqueeze(1)[line<0.3] = 0
+            m[:,i,:,:].unsqueeze(1)[mask > 0.1] = 0
+
+        output = torch.add(m, output)
         resultI = output.cpu().detach().numpy().transpose(0,2,3,1)
 
         for step, (img) in enumerate(resultI):
             cv2.imwrite('./data/out/{:02d}resultI.jpg'.format(test_step), np.uint8(img*255))
-            writer.add_image(np.uint8(img*255), 'test_result', step)
 
 if __name__ == "__main__":
     clock('start')
 
     train_loader = InPaintLoader('train')
     test_loader = InPaintLoader('test')
-
+    valid_loader = InPaintLoader('valid')
+    print(len(valid_loader.valid_loader))
     clock("dataloading")
     if TEST_MODE:
-        test(test_loader)
+        test(valid_loader)
     else:
         train(train_loader, test_loader)

@@ -14,6 +14,10 @@ from skimage import io, transform
 
 from config import *
 
+trans = standard_transforms.Compose([
+            standard_transforms.CenterCrop(IMGSIZE),
+            standard_transforms.ToTensor()])
+
 class Manga109(Data.Dataset):
     def __init__(self, mode, root_dir, mask_dir,
      target_dir=None, line_dir=None, sct_dir=None,
@@ -49,28 +53,36 @@ class Manga109(Data.Dataset):
         img_name = os.path.join(self.root_dir,
                                 self.matches[index])
         mask_name = os.path.join(self.mask_dir, FileName(self.matches[index], '.png'))
-        target_name = os.path.join(self.target_dir, FileName(self.matches[index], '.png'))
         screentone_name = os.path.join(self.sct_dir, FileName(self.matches[index], '.png'))
 
         self.mask = PIL.Image.open(mask_name).convert('L')
         self.image = PIL.Image.open(img_name).convert('RGB')
-        self.target_image = PIL.Image.open(target_name).convert('RGB')
+
+        if self.target_dir:
+            target_name = os.path.join(self.target_dir, FileName(self.matches[index], '.png'))
+            self.target_image = PIL.Image.open(target_name).convert('RGB')
+            self.target_image = self.target_transform(self.target_image)
  
         line_name = os.path.join(self.line_dir, FileName(self.matches[index], '.png'))
         self.line = PIL.Image.open(line_name).convert('L')
         self.line = self.singletrans(self.line)
 
         if self.transform:
+            self.shape = np.array(self.image).shape[0:2][::-1]
             self.image = self.transform(self.image)
             self.mask = self.singletrans(self.mask)
-            self.target_image = self.target_transform(self.target_image)
-
+            if self.mode == 'valid':
+                self.shape = np.array(self.image).shape[1:3][::-1]
             self.screentone = Image.fromarray(cv2.resize(GetImg(screentone_name, PATH_GRAY),
-                                             np.array(self.image).shape[0:2]))
-            self.screentone = self.singletrans(self.screentone)
+                                             self.shape))
+            if self.mode != 'valid':
+                self.screentone = trans(self.screentone)
 
-            
-            #print(np.array(self.image).transpose(1,2,0).shape, np.array(self.mask).shape)
+            else:
+                tran = standard_transforms.ToTensor()
+                self.screentone = tran(self.screentone)
+            print(np.array(self.image).transpose(1,2,0).shape, np.array(self.mask).shape,
+                  np.array(self.screentone).shape, self.shape)
 
             self.train_data = cv2.merge((np.array(self.image).transpose(1,2,0),
                                          np.array(self.line).transpose(1,2,0), 
@@ -84,8 +96,10 @@ class Manga109(Data.Dataset):
 
         if self.mode == 'train':
             return self.train_data, self.target_image, self.mask, self.line
-
-        return self.train_data, self.target_image, self.mask, self.line
+        elif self.mode == 'test':
+            return self.train_data, self.target_image, self.mask, self.line
+        else:
+            return self.train_data, self.mask, self.line
 
 class InPaintLoader:
     def __init__(self, mode):
@@ -169,11 +183,26 @@ class InPaintLoader:
                     image_transform=self.transform,
                     singletrans=self.singlelayer_transform,
                     target_transform=self.target_transform)
-
+    
             self.test_loader = Data.DataLoader(
                 test_dataset,
                 batch_size=TEST_BATCH_SIZE,
                 shuffle=False,
                 num_workers=0
             )
-            self.length = len(self.test_loader)            
+            self.length = len(self.test_loader)
+
+        elif self.mode == 'valid':
+            valid_dataset = Manga109(self.mode, V_INPUT, V_MASKDIR,
+                    line_dir=V_ROOTDIR, sct_dir=V_SCTDIR,
+                    image_transform=self.test_transform,
+                    singletrans=self.singlelayer_test,
+                    target_transform=self.target_test)
+
+            self.valid_loader = Data.DataLoader(
+                valid_dataset,
+                batch_size=1,
+                shuffle=False,
+                num_workers=0
+            )
+            self.length = len(self.valid_loader)

@@ -25,10 +25,16 @@ T_OUTPUT = './data/test/valid/'
 T_MASKDIR = './data/test/mask/'
 T_SCTDIR = './data/test/screentone/'
 
+#Valid
+V_INPUT = './valid/input/'
+V_OUTPUT = './valid/output/'
+V_MASKDIR = './valid/mask/'
+V_ROOTDIR = './valid/line/'
+V_SCTDIR = './valid/screentone/'
+
 if GABOR:
     INPUT = './data/gabor/input/'
     OUTPUT = '../../PCA/PCAresult/'
-
     T_ROOTDIR = './data/gabor/test/rawdata/'
     T_INPUT = './data/gabor/test/input/'
     T_OUTPUT = './data/gabor/test/output/'

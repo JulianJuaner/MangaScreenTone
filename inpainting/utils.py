@@ -30,7 +30,9 @@ class FlipChannels(object):
         return Image.fromarray(img.astype(np.uint8))
 
 class Binarize(object):
-    def __call__(self, img):
+    def __call__(self, img, screentone=None):
+        if screentone:
+            return img
         img = np.array(img)
         _, img = cv2.threshold(img,220,255,cv2.THRESH_BINARY)
         #print(img)
@@ -49,7 +51,8 @@ class DeNormalize(object):
 class SingleResize(object):
     def __call__(self, img):
         img = np.array(img)
-        newshape = realSize(img.shape[0:2])
+        newshape = realSize(img.shape[0:2][::-1])
+        print(newshape)
         img = cv2.resize(img, newshape)
         return Image.fromarray(img.astype(np.uint8))
 
