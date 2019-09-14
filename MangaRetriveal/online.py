@@ -11,7 +11,7 @@ from datasets import DataDataset, Erosion
 from torch import nn
 from torchvision import models
 from rpn import Similarity
-from models.networks import Illust2vecNet, myVGG, MultiScale
+from models.networks import Illust2vecNet, myVGG, MultiScale, MultiLayer
 from vae.encoder import FeatureEncoder, VAE
 from sklearn.decomposition import PCA
 from tqdm import tqdm
@@ -61,8 +61,11 @@ scales=[float(s)*0.5 for s in args.scales.split(',')]
 
 if 'ms' in args.test_mode:
 	illus2vec = MultiScale('models/illust2vec_tag_ver200_2.pth').eval().cuda()
+elif 'layer' in args.test_mode:
+	illus2vec = MultiLayer('models/illust2vec_tag_ver200_2.pth').eval().cuda()
 else:
 	illus2vec = Illust2vecNet('models/illust2vec_tag_ver200_2.pth').eval().cuda()
+
 if is_model:
 	featureEnc = FeatureEncoder().eval().cuda()
 	featureEnc.load_state_dict(torch.load('vae/checkpoints/%s/model_%d.pth' % (args.modelf, args.start-1)))

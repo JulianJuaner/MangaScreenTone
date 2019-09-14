@@ -60,6 +60,32 @@ class Illust2vec(nn.Module):
         #h = F.avg_pool2d(h, 7, stride=1)
         return h#.sigmoid()
         '''
+class MultiLayer(nn.Module):
+    def __init__(self, pth):
+        super(MultiLayer, self).__init__()
+        self.mean = torch.FloatTensor([164.76139251,  167.47864617,  181.13838569]).view(1, -1, 1, 1)
+        illust2vec = Illust2vec()
+        illust2vec.load_state_dict(torch.load(pth))
+        relu = nn.ReLU()
+        pad = nn.ReflectionPad2d(1)
+        pool = nn.MaxPool2d(2, stride=2)
+        self.pool = pool
+        model_3 = [pad, illust2vec.conv1_1, relu, pool]
+        model_3 += [pad, illust2vec.conv2_1, relu, pool]
+        model_3 += [pad, illust2vec.conv3_1, relu] 
+        model_4 = [pad, illust2vec.conv3_2, relu, pool, pad, illust2vec.conv4_1, relu]
+        model_5 = [pad, illust2vec.conv4_2, relu, pool, pad, illust2vec.conv5_1, relu]
+        self.model_3 = nn.Sequential(*model_3)
+        self.model_4 = nn.Sequential(*model_4)
+        self.model_5 = nn.Sequential(*model_5)
+
+    def forward(self, x):
+        x.cuda()
+        res_3 = self.model_3(x-self.mean.cuda())
+        res_4 = self.model_4(res_3)
+        res_5 = self.model_5(res_4)
+        res = torch.cat((self.pool(res_4), res_5), 1)
+        return res
 
 class MultiScale(nn.Module):
     def __init__(self, pth):
@@ -76,7 +102,7 @@ class MultiScale(nn.Module):
         model += [pad, illust2vec.conv2_1, relu, pool]
         model += [pad, illust2vec.conv3_1, relu, pad, illust2vec.conv3_2, relu, pool]
         model += [pad, illust2vec.conv4_1, relu, pad, illust2vec.conv4_2, relu, pool]
-        model += [pad, illust2vec.conv5_1, relu, pad, illust2vec.conv4_2, relu, pool]
+        model += [pad, illust2vec.conv5_1, relu, pool]#pad, illust2vec.conv4_2, relu, pool]
         self.model = nn.Sequential(*model)
 
     def forward(self, x):
