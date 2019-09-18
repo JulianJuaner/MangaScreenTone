@@ -79,12 +79,15 @@ class MultiLayer(nn.Module):
         self.model_4 = nn.Sequential(*model_4)
         self.model_5 = nn.Sequential(*model_5)
 
-    def forward(self, x):
+    def forward(self, x, mode='train'):
         x.cuda()
         res_3 = self.model_3(x-self.mean.cuda())
         res_4 = self.model_4(res_3)
         res_5 = self.model_5(res_4)
-        res = torch.cat((self.pool(res_4), res_5), 1)
+        if 'test' in mode:
+            res = torch.cat((self.pool(self.pool(res_3))*0.3, self.pool(res_4)*0.3, res_5), 1)
+        else:
+            res = torch.cat((self.pool(self.pool(res_3)), self.pool(res_4), res_5), 1)
         return res
 
 class MultiScale(nn.Module):
@@ -127,8 +130,8 @@ class Illust2vecNet(nn.Module):
         model += [pad, illust2vec.conv2_1, relu, pool]
         model += [pad, illust2vec.conv3_1, relu, pad, illust2vec.conv3_2, relu, pool]
         model += [pad, illust2vec.conv4_1, relu, pad, illust2vec.conv4_2, relu, pool]
-        model += [pad, illust2vec.conv5_1, relu, pool]#, pad, illust2vec.conv5_2, relu, pool]
-        # model += [pad, illust2vec.conv6_1, relu, pad, illust2vec.conv6_2, relu, pad, illust2vec.conv6_3, relu,
+        model += [pad, illust2vec.conv5_1, relu, pool, pad, illust2vec.conv5_2, relu, pool]
+        model += [pad, illust2vec.conv6_1, relu, pad]#, illust2vec.conv6_2, relu, pad, illust2vec.conv6_3, relu,
         #           pad, illust2vec.conv6_4, relu]#, nn.MaxPool2d(7, stride=1)]
         #model += [nn.Sigmoid()]
         self.model = nn.Sequential(*model)

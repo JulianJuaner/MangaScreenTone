@@ -175,7 +175,7 @@ for j,tdata in enumerate(tdataloader):
 		if is_model == False:
 			#gaussion blur...
 
-			features = illus2vec(data.cuda())
+			features = illus2vec(data.cuda())#, mode='train')
 			proposals, scores = simnet(features, image[:data[0].shape[0],:,:,:], first=True)
 		else:
 			proposals, scores = simnet(data[0].cuda(), image[:data[0].shape[0],:,:,:], first=True)
