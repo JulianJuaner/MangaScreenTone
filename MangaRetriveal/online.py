@@ -113,7 +113,7 @@ if is_model:
 	dataset = DataDataset(args.dataset, base=base, chnls=chnls, mode='feature', name=args.modelf)
 else:
 	if '512' in args.test_mode:
-		dirName = 'focus'
+		dirName = 'simline'
 	elif 'I' in args.test_mode:
 		dirName = 'image'
 	else:
@@ -153,7 +153,7 @@ for j,tdata in enumerate(tdataloader):
 						imagemask[count1][count2][level] = levels[level]
 		test_image = test_image - imagemask
 	imagedata = torch.FloatTensor(test_image.transpose(2,0,1)).unsqueeze(0)
-	kern = illus2vec(imagedata.cuda())#.cpu().numpy()
+	kern = illus2vec(imagedata.cuda(), mode='test')#.cpu().numpy()
 	#kern = torch.FloatTensor(two_addition(kern[0])).unsqueeze(0).cuda()
 	
 	if is_model:
@@ -175,7 +175,7 @@ for j,tdata in enumerate(tdataloader):
 		if is_model == False:
 			#gaussion blur...
 
-			features = illus2vec(data.cuda())#, mode='train')
+			features = illus2vec(data.cuda(), mode='train')
 			proposals, scores = simnet(features, image[:data[0].shape[0],:,:,:], first=True)
 		else:
 			proposals, scores = simnet(data[0].cuda(), image[:data[0].shape[0],:,:,:], first=True)
@@ -188,7 +188,7 @@ for j,tdata in enumerate(tdataloader):
 	for counter in range(len(topN.index)):
 		#print(dataset[topN.index[counter]][0].shape)
 		if is_model == False:
-			features = illus2vec(dataset[topN.index[counter]].unsqueeze(0).cuda())
+			features = illus2vec(dataset[topN.index[counter]].unsqueeze(0).cuda(), mode='train')
 			proposals, scores = simnet(features, image[:1,:,:,:])
 		else:
 			proposals, scores = simnet(dataset[topN.index[counter]][0].unsqueeze(0).cuda(), image[:1,:,:,:])

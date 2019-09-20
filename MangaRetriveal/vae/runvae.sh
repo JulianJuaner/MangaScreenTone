@@ -3,10 +3,10 @@
 #32_pow: 256
 #32: 256
 batch_size=1
-modelf="16_pow"
-start=9
+modelf="32_6_1"
+start=1
 lr=0.00003
-mode='test'
+mode='train'
 srun python3 -u model.py\
  --lr ${lr}\
  --mode ${mode}\

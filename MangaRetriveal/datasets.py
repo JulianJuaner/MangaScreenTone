@@ -133,10 +133,10 @@ class DataDataset(data.Dataset):
             feat3 = self.feat[rand3]
             #print(feat1, feat2)
             #--------------------------------
-            if True:
-                img1 = getImage(feat1,1)
-                img2 = getImage(feat1, mode=2)
-                return [img1, img2]
+            #if True:
+            #    img1 = getImage(feat1,1)
+            #    img2 = getImage(feat1, mode=2)
+            #    return [img1, img2]
             #--------------------------------
             return [getImage(feat1,1), getImage(feat2,1)]
             

@@ -75,6 +75,7 @@ class MultiLayer(nn.Module):
         model_3 += [pad, illust2vec.conv3_1, relu] 
         model_4 = [pad, illust2vec.conv3_2, relu, pool, pad, illust2vec.conv4_1, relu]
         model_5 = [pad, illust2vec.conv4_2, relu, pool, pad, illust2vec.conv5_1, relu]
+        model_6 = [pad, illust2vec.conv6_1, relu]
         self.model_3 = nn.Sequential(*model_3)
         self.model_4 = nn.Sequential(*model_4)
         self.model_5 = nn.Sequential(*model_5)
@@ -130,14 +131,14 @@ class Illust2vecNet(nn.Module):
         model += [pad, illust2vec.conv2_1, relu, pool]
         model += [pad, illust2vec.conv3_1, relu, pad, illust2vec.conv3_2, relu, pool]
         model += [pad, illust2vec.conv4_1, relu, pad, illust2vec.conv4_2, relu, pool]
-        model += [pad, illust2vec.conv5_1, relu, pool, pad, illust2vec.conv5_2, relu, pool]
-        model += [pad, illust2vec.conv6_1, relu, pad]#, illust2vec.conv6_2, relu, pad, illust2vec.conv6_3, relu,
+        model += [pad, illust2vec.conv5_1, relu, pad, illust2vec.conv5_2, relu, pool]
+        model += [pad, illust2vec.conv6_1, relu]#, illust2vec.conv6_2, relu]# pad, illust2vec.conv6_3, relu,
         #           pad, illust2vec.conv6_4, relu]#, nn.MaxPool2d(7, stride=1)]
         #model += [nn.Sigmoid()]
         self.model = nn.Sequential(*model)
         # self.mp = nn.MaxPool2d(4, stride=4)
 
-    def forward(self, x):
+    def forward(self, x, mode='train'):
         x.cuda()
         # if not self.mean.is_cuda:
         #     self.mean.cuda()
