@@ -6,6 +6,15 @@ import numpy as np
 import math
 from torch.nn import init
 
+def getNorm():
+    mean_4 = torch.load('image/featmean.pt')
+    mean_5 = torch.load('image/featmean_5.pt')
+    mean_6 = torch.load('image/featmean_6.pt')
+    std_4 = torch.load('image/featstd.pt')
+    std_5 = torch.load('image/featstd_5.pt')
+    std_6 = torch.load('image/featstd_6.pt')
+
+
 class myVGG(nn.Module):
     def __init__(self, requires_grad=False):
         super(myVGG, self).__init__()
@@ -70,25 +79,29 @@ class MultiLayer(nn.Module):
         pad = nn.ReflectionPad2d(1)
         pool = nn.MaxPool2d(2, stride=2)
         self.pool = pool
-        model_3 = [pad, illust2vec.conv1_1, relu, pool]
-        model_3 += [pad, illust2vec.conv2_1, relu, pool]
-        model_3 += [pad, illust2vec.conv3_1, relu] 
-        model_4 = [pad, illust2vec.conv3_2, relu, pool, pad, illust2vec.conv4_1, relu]
-        model_5 = [pad, illust2vec.conv4_2, relu, pool, pad, illust2vec.conv5_1, relu]
-        model_6 = [pad, illust2vec.conv6_1, relu]
-        self.model_3 = nn.Sequential(*model_3)
+        model_4 = [pad, illust2vec.conv1_1, relu, pool]
+        model_4 += [pad, illust2vec.conv2_1, relu, pool]
+        model_4 += [pad, illust2vec.conv3_1, relu] 
+        model_4 += [pad, illust2vec.conv3_2, relu, pool, pad, illust2vec.conv4_1, relu]
+        model_4 += [pad, illust2vec.conv4_2, relu, pool]
+        model_5 = [pad, illust2vec.conv5_1, relu]
+        model_6 = [pad, illust2vec.conv5_2, relu, pool, pad, illust2vec.conv6_1, relu]
         self.model_4 = nn.Sequential(*model_4)
         self.model_5 = nn.Sequential(*model_5)
+        self.model_6 = nn.Sequential(*model_6)
+        
 
     def forward(self, x, mode='train'):
         x.cuda()
-        res_3 = self.model_3(x-self.mean.cuda())
-        res_4 = self.model_4(res_3)
+        res_4 = self.model_4(x-self.mean.cuda())
         res_5 = self.model_5(res_4)
+        res_6 = self.model_6(res_5)
+        res_4 = self.pool(res_4)
+        res_5 = self.pool(res_5)
         if 'test' in mode:
-            res = torch.cat((self.pool(self.pool(res_3))*0.3, self.pool(res_4)*0.3, res_5), 1)
+            res = torch.cat((res_4, res_5, res_6), 1)
         else:
-            res = torch.cat((self.pool(self.pool(res_3)), self.pool(res_4), res_5), 1)
+            res = torch.cat((res_4, res_5, res_6), 1)
         return res
 
 class MultiScale(nn.Module):
@@ -127,12 +140,13 @@ class Illust2vecNet(nn.Module):
         relu = nn.ReLU()
         pad = nn.ReflectionPad2d(1)
         pool = nn.MaxPool2d(2, stride=2)
+        self.pool = pool
         model = [pad, illust2vec.conv1_1, relu, pool]
         model += [pad, illust2vec.conv2_1, relu, pool]
         model += [pad, illust2vec.conv3_1, relu, pad, illust2vec.conv3_2, relu, pool]
-        model += [pad, illust2vec.conv4_1, relu, pad, illust2vec.conv4_2, relu, pool]
-        model += [pad, illust2vec.conv5_1, relu, pad, illust2vec.conv5_2, relu, pool]
-        model += [pad, illust2vec.conv6_1, relu]#, illust2vec.conv6_2, relu]# pad, illust2vec.conv6_3, relu,
+        model += [pad, illust2vec.conv4_1, relu, pad, illust2vec.conv4_2, relu, pool, pool]
+        #model += [pad, illust2vec.conv5_1, relu, pad, illust2vec.conv5_2, relu, pool]
+        #model += [pad, illust2vec.conv6_1, relu]#, illust2vec.conv6_2, relu]# pad, illust2vec.conv6_3, relu,
         #           pad, illust2vec.conv6_4, relu]#, nn.MaxPool2d(7, stride=1)]
         #model += [nn.Sigmoid()]
         self.model = nn.Sequential(*model)
@@ -140,8 +154,6 @@ class Illust2vecNet(nn.Module):
 
     def forward(self, x, mode='train'):
         x.cuda()
-        # if not self.mean.is_cuda:
-        #     self.mean.cuda()
         return self.model(x-self.mean.cuda())
         # return self.mp(self.model(x-self.mean))
 
