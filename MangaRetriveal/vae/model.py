@@ -23,7 +23,7 @@ import time
 from networks1 import init_weights, get_scheduler
 from encoder import FeatureEncoder, VAE, FeatureMap
 
-CHANNEL = 32
+CHANNEL = 64
 name = 'simline'
 w = 512
 h = 512
@@ -158,8 +158,8 @@ def train(epoch, opt):
             Yp = model(Y)
             Xp = model(X)
             # Implementation of feature map loss.
-            FeatureMap_Before = FeatureMap(Y.detach(), 512).cuda()
-            FeatureMap_After = FeatureMap(Yp.detach(), 256).cuda()
+            FeatureMap_Before = FeatureMap(Y.detach(), 2048).cuda()
+            FeatureMap_After = FeatureMap(Yp.detach(), 2048).cuda()
             Map_before = FeatureMap_Before(X)
             Map_after = FeatureMap_After(Xp)
             
@@ -260,15 +260,15 @@ def testAndSave(opt):
                 print(i)
             #Xp = torch.FloatTensor(two_addition(X[0].detach().cpu().numpy())).cuda().unsqueeze(0)
             Xp = model(X)
-            Xp = Xp.cpu().detach().numpy()
+            Xp = Xp.cpu().detach()
         for j in range(batch_size):
             print(os.path.join(opt.dataset,
             opt.outf,testLoaderA.data[i*batch_size+j].split('/')[-2],
-            testLoaderA.data[i*batch_size+j].split('/')[-1].replace('png', 'npy')))
+            testLoaderA.data[i*batch_size+j].split('/')[-1].replace('png', 'pt')))
 
-            np.save(os.path.join(opt.dataset,
+            torch.save(Xp[j], os.path.join(opt.dataset,
             opt.outf,testLoaderA.data[i*batch_size+j].split('/')[-2],
-            testLoaderA.data[i*batch_size+j].split('/')[-1].replace('png', 'npy')), Xp[j])
+            testLoaderA.data[i*batch_size+j].split('/')[-1].replace('png', 'pt')))
         
 
 

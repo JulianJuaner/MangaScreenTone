@@ -68,13 +68,8 @@ def getImage(filename, scale=1, mode=0):
 
     return img
 def getFeature(filename, normal=False, channel=32):
-    #feature = (sparse.load_npz(filename).toarray())
-    #feature = feature.reshape((512, 73, 51))
-    feature = np.load(filename)#[channel:, :, :]
-    feature = torch.FloatTensor(feature)
-    #feature = torch.nn.functional.normalize(feature)
-    #if normal == True:
-        #feature = tran(feature)
+    feature = torch.load(filename)#[channel:, :, :]
+    #feature = torch.FloatTensor(feature)
     return Variable(feature,requires_grad=False)
 
 def Erosion(img, kernalSize=3):

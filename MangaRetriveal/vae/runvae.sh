@@ -4,10 +4,10 @@
 #32: 256
 #24, 31
 batch_size=1
-modelf="48_norm"
+modelf="norm_64"
 start=1
 lr=0.00003
-mode='test'
+mode='train'
 srun python3 -u model.py\
  --lr ${lr}\
  --mode ${mode}\
