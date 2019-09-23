@@ -51,7 +51,7 @@ if '512' in args.test_mode:
 	chnls = 512
 else:
 	is_model =  True
-	chnls = 32
+	chnls = 64
 
 is_mask = False
 

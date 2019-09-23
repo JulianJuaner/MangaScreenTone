@@ -2,18 +2,10 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 from torchvision import models
+import torchvision.transforms as transforms
 import numpy as np
 import math
 from torch.nn import init
-
-def getNorm():
-    mean_4 = torch.load('image/featmean.pt')
-    mean_5 = torch.load('image/featmean_5.pt')
-    mean_6 = torch.load('image/featmean_6.pt')
-    std_4 = torch.load('image/featstd.pt')
-    std_5 = torch.load('image/featstd_5.pt')
-    std_6 = torch.load('image/featstd_6.pt')
-
 
 class myVGG(nn.Module):
     def __init__(self, requires_grad=False):
@@ -89,15 +81,32 @@ class MultiLayer(nn.Module):
         self.model_4 = nn.Sequential(*model_4)
         self.model_5 = nn.Sequential(*model_5)
         self.model_6 = nn.Sequential(*model_6)
+        self.get_norm()
         
+    def get_norm(self):
+        mean_4 = torch.load('image/featmean_4.pt')
+        mean_5 = torch.load('image/featmean_5.pt')
+        mean_6 = torch.load('image/featmean_6.pt')
+        std_4 = torch.load('image/featstd_4.pt')
+        std_5 = torch.load('image/featstd_5.pt')
+        std_6 = torch.load('image/featstd_6.pt')
+        self.normalize_4 = transforms.Normalize(mean=mean_4,std=std_4)
+        self.normalize_5 = transforms.Normalize(mean=mean_5,std=std_5)
+        self.normalize_6 = transforms.Normalize(mean=mean_6,std=std_6)
 
-    def forward(self, x, mode='train'):
+
+    def forward(self, x, mode='train', is_norm=True):
         x.cuda()
         res_4 = self.model_4(x-self.mean.cuda())
         res_5 = self.model_5(res_4)
         res_6 = self.model_6(res_5)
         res_4 = self.pool(res_4)
         res_5 = self.pool(res_5)
+        if is_norm:
+            res_4 = self.normalize_4(res_4[0]).unsqueeze(0)
+            res_5 = self.normalize_5(res_5[0]).unsqueeze(0)
+            res_6 = self.normalize_6(res_6[0]).unsqueeze(0)
+
         if 'test' in mode:
             res = torch.cat((res_4, res_5, res_6), 1)
         else:

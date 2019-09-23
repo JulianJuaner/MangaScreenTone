@@ -1,7 +1,7 @@
 from __future__ import print_function
 import sys
 sys.path.append('..')
-from models.networks import Illust2vecNet
+from models.networks import Illust2vecNet, MultiLayer
 from offline import two_addition
 import argparse
 import torch
@@ -63,7 +63,7 @@ if is_vae:
     model = VAE().cuda()
 else:
     model = FeatureEncoder().cuda()
-i2v = Illust2vecNet('../models/illust2vec_tag_ver200_2.pth').eval().cuda()
+i2v = MultiLayer('../models/illust2vec_tag_ver200_2.pth').eval().cuda()
 
 distance = torch.nn.MSELoss(reduce=False).cuda()
 dist = torch.nn.SmoothL1Loss().cuda()
@@ -204,7 +204,7 @@ def train(epoch, opt):
             solver.step()
             if it % print_interval == 0:
                 #print(D1.item(), D2.item())
-                sys.stdout.write("%s: epoch: %d iter: %d train_loss: %.07f,"%# idx_loss: %.07f, best_loss: %.07f"%
+                print("%s: epoch: %d iter: %d train_loss: %.07f,"%# idx_loss: %.07f, best_loss: %.07f"%
                     (opt.outf, epoch, it, loss.item()))
                 train_writer.add_scalar('loss', loss.item(), baseit + it)
                 #train_writer.add_scalar('kl_loss', kl_loss.item(), baseit + it)

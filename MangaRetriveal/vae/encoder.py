@@ -2,13 +2,14 @@ import torch
 from torch import nn
 import torch.nn.functional as F
 
-CHANNEL = 32
-VAE = True
+CHANNEL = 64
+inchannel = 2048
+isVAE = True
 
 # The feature map. Same as the convolution process in the RPN head. 
 # Return a response feature map with the input and the query kernel.
 class FeatureMap(torch.nn.Module):
-    def __init__(self, kern, in_channels=512):
+    def __init__(self, kern, in_channels=2048):
         super(FeatureMap, self).__init__()
         kern.requires_grad = False
         rh = kern.shape[2] // 2 * 2 + 1
@@ -29,7 +30,7 @@ class FeatureEncoder(torch.nn.Module):
     def __init__(self):
         super(FeatureEncoder, self).__init__()
         self.enc = nn.Sequential(
-            nn.Conv2d(512,256,kernel_size=1,stride=1,padding=0),
+            nn.Conv2d(inchannel,256,kernel_size=1,stride=1,padding=0),
             nn.InstanceNorm2d(256),
             nn.ReLU(),
             nn.Conv2d(256,256,kernel_size=1,stride=1,padding=0),
