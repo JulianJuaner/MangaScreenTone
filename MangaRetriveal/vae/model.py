@@ -165,41 +165,8 @@ def train(epoch, opt):
             
             # Compute the index with the highest response in the map.
             # x: row; y: column; B: before; A: after.
-            '''xb_, indices_xB = torch.max(Map_before[0][0], 0)
-            yb_, indices_yB = torch.max(Map_before[0][0], 1)
-            xa_, indices_xA = torch.max(Map_after[0][0], 0)
-            ya_, indices_yA = torch.max(Map_after[0][0], 1)
-            loss_idx = compare(indices_xB.float(), indices_xA.float()) + compare(indices_yB.float(), indices_yA.float())
-            # Compute the highest responce point.
-            max_xB, max_idxB = torch.max(xb_, 0)
-            max_xA, max_idxA = torch.max(xa_, 0)
-            max_yB, max_idyB = torch.max(yb_, 0)
-            max_yA, max_idyA = torch.max(ya_, 0)
-            # Weighted by MAX response.
-            # Calculate distance of value between actual point and predicted MAX response point.
-            value_diff = dist(Map_before[0][0][max_idyB.item()][max_idxB.item()], Map_before[0][0][max_idyA.item()][max_idxA.item()])
-            expect_diff = dist(Map_before[0][0][max_idyB.item()][max_idxB.item()], Map_after[0][0][max_idyB.item()][max_idxB.item()])
-            actual_diff = dist(Map_after[0][0][max_idyA.item()][max_idxA.item()], Map_before[0][0][max_idyA.item()][max_idxA.item()]) + \
-                             dist(Map_after[0][0][max_idyA.item()][max_idxA.item()], Map_before[0][0][max_idyB.item()][max_idxB.item()])
-            #loss_best = (dist(max_idxB.float(), max_idxA.float()) + dist(max_idyB.float(), max_idyA.float())).pow(0.5)*value_diff.item()
-            #print(Map_before.shape, Map_after.shape)'''
-            loss = dist(torch.pow(Map_before+1.0, 2), torch.pow(Map_after+1.0, 2)) #+ (actual_diff + expect_diff + value_diff)*60*(Map_before[0][0][max_idyB.item()][max_idxB.item()].item()-0.25)
-            '''
-            D1 = torch.mean(distance(Map_before, Map_after), dim=1, keepdim=True)
-            #D2 = torch.mean(distance(Xp, Yp), dim=1, keepdim=True)#*(CHANNEL)
-            D1 = dist(X, Y)
-            D2 = dist(Xp, Yp)
-            #print(D1.shape, D2.shape)
-            #kl_loss_x = torch.mean(0.5 * torch.sum(torch.exp(xp)  - 1. - xp, 1))
-            #kl_loss_y = torch.mean(0.5 * torch.sum(torch.exp(yp)  - 1. - yp, 1))
-            #kl_loss = 5*lamb*(kl_loss_x+kl_loss_y)
-            distribution_X = F.log_softmax(Xp)
-            distri = F.softmax(torch.randn_like(Xp))
-            #distribution_Y = F.log_softmax(Yp, 1)
-            kl_loss = KL(distribution_X, distri)*lamb
-            diff = compare(D1, D2)
-            loss = diff #+ kl_loss
-            '''
+            loss = dist(torch.pow(torch.clamp((Map_before), 0,1)+0.5, 2), torch.pow(torch.clamp((Map_after), 0,1)+0.5, 2)) #+ (actual_diff + expect_diff + value_diff)*60*(Map_before[0][0][max_idyB.item()][max_idxB.item()].item()-0.25)
+        
             loss.backward(retain_graph=True)
             solver.step()
             if it % print_interval == 0:
@@ -207,13 +174,7 @@ def train(epoch, opt):
                 print("%s: epoch: %d iter: %d train_loss: %.07f,"%# idx_loss: %.07f, best_loss: %.07f"%
                     (opt.outf, epoch, it, loss.item()))
                 train_writer.add_scalar('loss', loss.item(), baseit + it)
-                #train_writer.add_scalar('kl_loss', kl_loss.item(), baseit + it)
-                #train_writer.add_scalar('diff', diff.item(), baseit + it)
-                #print(Map_before[0][0][0], Map_after[0][0][0])
-                #print(max_idxB, max_idxA, max_idyB, max_idyA)
-                #print(Map_before[0][0][max_idyB.item()][max_idxB.item()])
-                #print(indices_xB)
-                #print(indices_xA)
+                print(X.shape, Y.shape)
                 train_writer.add_image('kernel', torchvision.utils.make_grid(data[1][:,:3,:,:]/255), baseit + it)
                 train_writer.add_image('output', torchvision.utils.make_grid(F.normalize(Xp[:, :3, :, :])), baseit + it)
                 train_writer.add_image('feature_map', torchvision.utils.make_grid(torch.clamp((Map_before), 0,1)), baseit + it)

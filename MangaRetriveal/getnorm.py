@@ -36,7 +36,7 @@ args = parser.parse_args()
 
 torch.cuda.set_device(args.gpu)
 base = 2**4
-chnl = 512
+chnl = 1024
 dirName = 'simline'
 dataset = DataDataset(args.dataset, base=base, chnls=chnl, mode='img', name=dirName)
 # dataset = DataDataset('data/p11')
@@ -59,12 +59,20 @@ def test():
         gaborfeat = gaborext(X).reshape(chnl,-1)
         pixs += gaborfeat.shape[1]
         sums += gaborfeat.sum(dim=1)
-
+        min_s = torch.min(gaborfeat, dim=1).values
+        max_s = torch.max(gaborfeat, dim=1).values
+        print(gaborfeat.shape)
+        for i in range(chnl):
+            if min_s[i] < mins[i]:
+                mins[i] = min_s[i]
+            if max_s[i] > maxs[i]:
+                maxs[i] = max_s[i]
         gaborfeat = None
         torch.cuda.empty_cache()
 
     print(sums/pixs)
-    torch.save(sums/pixs, "featmean_4.pt")
+    torch.save(mins, "featmin_6.pt")
+    torch.save(maxs, "featmax_6.pt")
 
 
     stds = torch.zeros(chnl).cuda() # 0.0705
@@ -82,7 +90,7 @@ def test():
         torch.cuda.empty_cache()
     res = (stds/pixs).sqrt()
     print(res)
-    torch.save(res, "featstd_4.pt")
+    #torch.save(res, "featstd_4.pt")
     # pbar.finish()
 
 # =============================== TRAINING ====================================

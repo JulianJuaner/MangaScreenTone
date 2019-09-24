@@ -214,8 +214,7 @@ for j,tdata in enumerate(tdataloader):
 		x1,y1,x2,y2 = rois_ns[order[k]]
 
 		cropped = img[max(0,y1):min(1170,y2), max(0,x1):min(827,x2),:]
-		results.append(img[y1:y2, x1:x2,:])#cv2.resize(img[y1:y2, x1:x2,:],None,fx=max(w/(y2-y1),h/(x2-x1)),fy=max(w/(y2-y1),h/(x2-x1)),
-			#interpolation=cv2.INTER_LINEAR))
+		results.append(img[y1:y2, x1:x2,:])
 		cv2.rectangle(img, (x1,y1), (x2,y2),(0,255,0), 3)
 		#cv2.imwrite('%s/normalize%d%s_%d.png'%(args.outf, j, tdataset.data[j].split('/')[-1],k), img)
 
@@ -235,4 +234,4 @@ for j,tdata in enumerate(tdataloader):
 		ax.append(t)
 		plt.imshow(img)
 	os.makedirs('%s/%s'%(args.outf, args.test_mode), exist_ok=True)
-	plt.savefig('%s/%s/%d%s.png'%(args.outf, args.test_mode, j, tdataset.data[j].split('/')[-1]), bbox_inches='tight', pad_inches=0.02)
+	plt.savefig('%s/%s/%s.png'%(args.outf, args.test_mode, tdataset.data[j].split('/')[-1]), bbox_inches='tight', pad_inches=0.02)

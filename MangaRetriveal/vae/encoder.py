@@ -25,10 +25,35 @@ class FeatureMap(torch.nn.Module):
     def forward(self, x):
         t = self.sim(self.pad(x)).div(self.tnorm(self.pad(x.pow(2))).pow(0.5)*self.knorm+1e-8)
         return t
-       
+
 class FeatureEncoder(torch.nn.Module):
     def __init__(self):
         super(FeatureEncoder, self).__init__()
+        self.enc = nn.Sequential(
+            nn.Conv2d(inchannel,512,kernel_size=1,stride=1,padding=0),
+            nn.InstanceNorm2d(512),
+            nn.ReLU(),
+            nn.Conv2d(512,256,kernel_size=1,stride=1,padding=0),
+            nn.InstanceNorm2d(256),
+            nn.ReLU(),
+            nn.Conv2d(256,128,kernel_size=1,stride=1,padding=0),
+            nn.InstanceNorm2d(128),
+            nn.ReLU(),
+            nn.Conv2d(128,CHANNEL,kernel_size=1,stride=1,padding=0),
+            #nn.InstanceNorm2d(CHANNEL),
+            #nn.ReLU(),
+            #nn.Tanh()
+            )
+
+    def forward(self, x):
+        inter = self.enc(x)
+        #w= torch.chunk(inter, 2, dim=1)
+        #repre = self.reparameterize(w, logvar)
+        return inter
+
+class FeatureEncoderNorm(torch.nn.Module):
+    def __init__(self):
+        super(FeatureEncoderNorm, self).__init__()
         self.enc = nn.Sequential(
             nn.Conv2d(inchannel,256,kernel_size=1,stride=1,padding=0),
             nn.InstanceNorm2d(256),

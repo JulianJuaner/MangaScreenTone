@@ -98,7 +98,7 @@ class DataDataset(data.Dataset):
         else:
             self.data = make_dataset(os.path.join(root,'simline'))
         self.len = len(self.data)
-        print('length:', len(self.feat), os.path.join(root,name))
+        print('length:', self.len, os.path.join(root,name))
         self.basic = basic
         self.mode = mode
         self.base = base
@@ -121,11 +121,9 @@ class DataDataset(data.Dataset):
         elif self.mode =='feature_compress':
             rand1 = random.randint(0, self.len-1)
             rand2 = random.randint(0, 12000)
-            rand3 = random.randint(0, self.len-1)
             #print(rand1, rand2)
             feat1 = self.feat[rand1]
             feat2 = self.kernset[rand2]
-            feat3 = self.feat[rand3]
             #print(feat1, feat2)
             #--------------------------------
             #if True:
@@ -133,7 +131,7 @@ class DataDataset(data.Dataset):
             #    img2 = getImage(feat1, mode=2)
             #    return [img1, img2]
             #--------------------------------
-            return [getImage(feat1,1), getImage(feat2,1)]
+            return [getImage(feat1,1,0), getImage(feat2,1,0)]
             
         else:
             #filepath = self.data[index%self.len]
