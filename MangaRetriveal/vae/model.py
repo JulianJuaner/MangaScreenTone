@@ -55,7 +55,7 @@ print(opt)
 manga_pth = opt.dataset
 print_interval = 300
 
-trainloaderA = DataDataset(manga_pth, base=0, name=name, mode='feature_compress_resize')
+trainloaderA = DataDataset(manga_pth, base=0, name=name, mode='feature_compress')
 trainloader = torch.utils.data.DataLoader(trainloaderA, batch_size=opt.batchSize,
                                          shuffle=True, num_workers=opt.workers)
 #distanceEval = torch.nn.L2loss()
@@ -152,16 +152,16 @@ def train(epoch, opt):
                 train_writer.add_image('original_img', torchvision.utils.make_grid(data[0][:,:3,:,:]), baseit + it)    
 
         else:
-            Z = i2v(Variable(data[2].cuda(), requires_grad=True))
+            #Z = i2v(Variable(data[2].cuda(), requires_grad=True))
             solver.zero_grad()
             #Xp = torch.FloatTensor(two_addition(X[0].detach().cpu().numpy())).cuda().unsqueeze(0)
             #Yp = torch.FloatTensor(two_addition(Y[0].detach().cpu().numpy())).cuda().unsqueeze(0)
             Yp = model(Y)
             Xp = model(X)
-            Zp = model(Z)
+            #Zp = model(Z)
             # Implementation of feature map loss.
             FeatureMap_Before = FeatureMap(Y.detach(), 2048).cuda()
-            FeatureMap_After = FeatureMap(Zp.detach(), 2048).cuda()
+            FeatureMap_After = FeatureMap(Yp.detach(), 2048).cuda()
             Map_before = FeatureMap_Before(X)
             Map_after = FeatureMap_After(Xp)
             

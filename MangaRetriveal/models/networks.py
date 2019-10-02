@@ -81,7 +81,7 @@ class MultiLayer(nn.Module):
         self.model_4 = nn.Sequential(*model_4)
         self.model_5 = nn.Sequential(*model_5)
         self.model_6 = nn.Sequential(*model_6)
-        self.get_norm()
+        #self.get_norm()
         
     def get_norm(self):
         mean_4 = torch.load('../image/featmean_4.pt')

@@ -12,7 +12,7 @@ from skimage import segmentation
 import skimage
 import cv2
 import scipy.sparse as sparse
-
+#testing
 MAX_POOL = 2
 #OFFLINE = True
 GAUSSIAN = False

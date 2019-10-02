@@ -5,7 +5,7 @@
 #25
 #24, 31
 batch_size=1
-modelf="norm_32_resize"
+modelf="64layer"
 start=1
 lr=0.00003
 mode='train'
