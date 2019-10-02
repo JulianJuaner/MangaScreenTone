@@ -48,15 +48,31 @@ normalize = transforms.Normalize(mean=[0.485, 0.456, 0.406],
                                  std=[0.229, 0.224, 0.225])
 crop = transforms.RandomCrop((256, 256))
 
+def cropresize():
+    randsize = random.randint(200, 400)
+    randcrop = transforms.RandomCrop((randsize, randsize))
+    resize = transforms.Resize((256, 256), interpolation=2)
+    return randcrop, resize
+
+
 def gaussBlur(img, kern_size=(21,21)):
     return cv2.GaussianBlur(img, kern_size, 0)
 
 def getImage(filename, scale=1, mode=0):
     src = cv2.imread(filename,1)
     if mode == 2:
+        C, R = cropresize()
         src = Image.fromarray(src)
-        src = crop(src)
-        src = np.array(src)
+        srcC = C(src)
+        srcR = R(srcC)
+        srcR = np.array(srcR)
+        srcC = np.array(srcC)
+        imgR = srcR.transpose(2,0,1).astype(np.float32)
+        imgR = Variable(torch.from_numpy(imgR), requires_grad=False)
+        imgC = srcC.transpose(2,0,1).astype(np.float32)
+        imgC = Variable(torch.from_numpy(imgC), requires_grad=False)
+        return imgC, imgR
+
     if mode==1:
         src = cv2.resize(src, (256, 256))
     if GAUSSIAN and mode==1:
@@ -118,7 +134,7 @@ class DataDataset(data.Dataset):
             return getImage(filepath, self.scale, self.basic)
         elif self.mode=='none':
             return [0]
-        elif self.mode =='feature_compress':
+        elif 'feature_compress' in self.mode:
             rand1 = random.randint(0, self.len-1)
             rand2 = random.randint(0, 12000)
             #print(rand1, rand2)
@@ -126,10 +142,10 @@ class DataDataset(data.Dataset):
             feat2 = self.kernset[rand2]
             #print(feat1, feat2)
             #--------------------------------
-            #if True:
-            #    img1 = getImage(feat1,1)
-            #    img2 = getImage(feat1, mode=2)
-            #    return [img1, img2]
+            if "resize" in self.mode:
+                img1 = getImage(feat1,1)
+                img2, img3 = getImage(feat1, mode=2)
+                return [img1, img2, img3]
             #--------------------------------
             return [getImage(feat1,1,0), getImage(feat2,1,0)]
             

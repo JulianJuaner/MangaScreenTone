@@ -84,18 +84,18 @@ class MultiLayer(nn.Module):
         self.get_norm()
         
     def get_norm(self):
-        mean_4 = torch.load('image/featmean_4.pt')
-        mean_5 = torch.load('image/featmean_5.pt')
-        mean_6 = torch.load('image/featmean_6.pt')
-        std_4 = torch.load('image/featstd_4.pt')
-        std_5 = torch.load('image/featstd_5.pt')
-        std_6 = torch.load('image/featstd_6.pt')
+        mean_4 = torch.load('../image/featmean_4.pt')
+        mean_5 = torch.load('../image/featmean_5.pt')
+        mean_6 = torch.load('../image/featmean_6.pt')
+        std_4 = torch.load('../image/featstd_4.pt')
+        std_5 = torch.load('../image/featstd_5.pt')
+        std_6 = torch.load('../image/featstd_6.pt')
         self.normalize_4 = transforms.Normalize(mean=mean_4,std=std_4)
         self.normalize_5 = transforms.Normalize(mean=mean_5,std=std_5)
         self.normalize_6 = transforms.Normalize(mean=mean_6,std=std_6)
 
 
-    def forward(self, x, mode='train', is_norm=True):
+    def forward(self, x, mode='train', is_norm=False):
         x.cuda()
         res_4 = self.model_4(x-self.mean.cuda())
         res_5 = self.model_5(res_4)
