@@ -167,7 +167,7 @@ def train(epoch, opt):
             
             #diff scale implementation.
             #FeatureMap
-            loss = dist(torch.pow(torch.clamp((Map_before), 0,1)+0.7, 3), torch.pow(torch.clamp((Map_after), 0,1)+0.7, 3)) #+ (actual_diff + expect_diff + value_diff)*60*(Map_before[0][0][max_idyB.item()][max_idxB.item()].item()-0.25)
+            loss = dist(torch.pow(Map_before+0.5, 2), torch.pow(Map_after+0.5, 2)) #+ (actual_diff + expect_diff + value_diff)*60*(Map_before[0][0][max_idyB.item()][max_idxB.item()].item()-0.25)
         
             loss.backward(retain_graph=True)
             solver.step()

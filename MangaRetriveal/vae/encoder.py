@@ -55,16 +55,16 @@ class FeatureEncoder(torch.nn.Module):
     def __init__(self):
         super(FeatureEncoder, self).__init__()
         self.enc = nn.Sequential(
-            nn.Conv2d(inchannel,512,kernel_size=3,stride=1,padding=1),
+            nn.Conv2d(inchannel,512,kernel_size=1,stride=1,padding=0),
             nn.InstanceNorm2d(512),
             nn.ReLU(),
-            nn.Conv2d(512,256,kernel_size=3,stride=1,padding=1),
+            nn.Conv2d(512,256,kernel_size=1,stride=1,padding=0),
             nn.InstanceNorm2d(256),
             nn.ReLU(),
-            nn.Conv2d(256,128,kernel_size=3,stride=1,padding=1),
+            nn.Conv2d(256,128,kernel_size=1,stride=1,padding=0),
             nn.InstanceNorm2d(128),
             nn.ReLU(),
-            nn.Conv2d(128,CHANNEL,kernel_size=3,stride=1,padding=1),
+            nn.Conv2d(128,CHANNEL,kernel_size=1,stride=1,padding=0),
             #nn.InstanceNorm2d(CHANNEL),
             nn.ReLU(),
             #nn.Sigmoid()

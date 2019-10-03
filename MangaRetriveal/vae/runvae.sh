@@ -4,11 +4,12 @@
 #32: 256
 #25
 #24, 31
+#48_no_rm: 40
 batch_size=1
-modelf="64layer"
-start=1
+modelf="456_64layer"
+start=4
 lr=0.00003
-mode='train'
+mode='test'
 srun python3 -u model.py\
  --lr ${lr}\
  --mode ${mode}\
