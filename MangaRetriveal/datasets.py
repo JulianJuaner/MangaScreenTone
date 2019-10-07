@@ -23,7 +23,7 @@ def low_reso(img):
 IMG_EXTENSIONS = [
     '.jpg', '.JPG', '.jpeg', '.JPEG',
     '.png', '.PNG', '.bmp', '.BMP',
-    '.npy', '.npz', '.svg','.pt'
+    '.npy', '.npz', '.svg', 'pt'
 ]
 TRANS = transforms.Compose([transforms.ToTensor()])
 tran = TRANS

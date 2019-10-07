@@ -197,10 +197,12 @@ batch_size=opt.batchSize
 #testLoaderA = DataDataset(manga_pth, base=0, name=name, mode='feature')
 #testLoader = torch.utils.data.DataLoader(testLoaderA, batch_size=opt.batchSize,
 #                                         shuffle=True, num_workers=opt.workers)
+
+NAME = 'image'
 def testAndSave(opt):
-    books = os.listdir(os.path.join(manga_pth,'simline'))
+    books = os.listdir(os.path.join(manga_pth,NAME))
     books.sort()
-    name = 'simline'
+    name = NAME
     start = time.time()
 
     for book in books:
@@ -229,9 +231,15 @@ def testAndSave(opt):
             opt.outf,testLoaderA.data[i*batch_size+j].split('/')[-2],
             testLoaderA.data[i*batch_size+j].split('/')[-1].replace('png', 'pt')))
 
-            torch.save(Xp[j], os.path.join(opt.dataset,
-            opt.outf,testLoaderA.data[i*batch_size+j].split('/')[-2],
-            testLoaderA.data[i*batch_size+j].split('/')[-1].replace('png', 'pt')))
+            if '.JPG' in testLoaderA.data[i*batch_size+j].split('/')[-1]:
+                 torch.save(Xp[j], os.path.join(opt.dataset,
+                opt.outf,testLoaderA.data[i*batch_size+j].split('/')[-2],
+                testLoaderA.data[i*batch_size+j].split('/')[-1].replace('.JPG', '.pt')))
+            else:
+                torch.save(Xp[j], os.path.join(opt.dataset,
+                opt.outf,testLoaderA.data[i*batch_size+j].split('/')[-2],
+                testLoaderA.data[i*batch_size+j].split('/')[-1].replace('png', 'pt')))
+
         
 
 

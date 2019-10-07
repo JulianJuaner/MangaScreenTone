@@ -46,9 +46,9 @@ base = 2**4
 
 h,w = 1170//base,827//base
 
-if '512' in args.test_mode:
+if 'no' in args.test_mode:
 	is_model = False
-	chnls = 512
+	chnls = 2048
 else:
 	is_model =  True
 	chnls = 64
@@ -210,7 +210,7 @@ for j,tdata in enumerate(tdataloader):
 	results=[]
 	for k in range(ret):
 		idx = int(labels[order[k]])#int(rois_s[order[k],0]%len(dataset))
-		img = cv2.imread(dataset.data[topN.index[idx]%len(dataset)])
+		img = cv2.cvtColor(cv2.imread(dataset.data[topN.index[idx]%len(dataset)].replace('simline', 'img').replace('png', 'jpg')), cv2.COLOR_BGR2RGB)
 		x1,y1,x2,y2 = rois_ns[order[k]]
 
 		cropped = img[max(0,y1):min(1170,y2), max(0,x1):min(827,x2),:]
