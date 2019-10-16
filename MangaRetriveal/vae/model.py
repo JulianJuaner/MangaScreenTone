@@ -152,10 +152,7 @@ def train(epoch, opt):
                 train_writer.add_image('original_img', torchvision.utils.make_grid(data[0][:,:3,:,:]), baseit + it)    
 
         else:
-            #Z = i2v(Variable(data[2].cuda(), requires_grad=True))
             solver.zero_grad()
-            #Xp = torch.FloatTensor(two_addition(X[0].detach().cpu().numpy())).cuda().unsqueeze(0)
-            #Yp = torch.FloatTensor(two_addition(Y[0].detach().cpu().numpy())).cuda().unsqueeze(0)
             Yp = model(Y)
             Xp = model(X)
             #Zp = model(Z)
@@ -239,9 +236,6 @@ def testAndSave(opt):
                 torch.save(Xp[j], os.path.join(opt.dataset,
                 opt.outf,testLoaderA.data[i*batch_size+j].split('/')[-2],
                 testLoaderA.data[i*batch_size+j].split('/')[-1].replace('png', 'pt')))
-
-        
-
 
 try:
     os.mkdir('checkpoints/%s'%opt.outf)

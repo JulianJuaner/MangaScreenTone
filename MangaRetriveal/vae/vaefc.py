@@ -135,8 +135,6 @@ def test(epoch, args):
 print_interval = 50
 save_interval = 3
 batch_size=args.batchSize
-gaborext = GaborWavelet()
-gaborext.eval()
 model = GaborVAE()
 
 try:
@@ -148,16 +146,11 @@ solver = optim.Adam(model.parameters(), lr=args.lr, betas=(0.5,0.9), weight_deca
 scheduler = get_scheduler(solver, args)
 train_writer = tensorboardX.SummaryWriter("./log/%s/"%args.outf)
 
-# print(model)
 if args.start>1:
     model.load_state_dict(torch.load('checkpoints/%s/model_%d.pth' % (args.outf, args.start-1)))
-    #solver.load_state_dict(torch.load('checkpoints/%s/optimizer_%d.pth' % (args.outf, args.start-1)))
 else:
     init_weights(model, init_type='kaiming')
 
-# recon_loss = nn.L1Loss()#nn.BCELoss() reduction='elementwise_mean'
-
-gaborext.cuda()
 model.cuda()
 if args.mode == 'train':
     for epoch in range(args.start, args.nepoch+1):

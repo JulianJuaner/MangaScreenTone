@@ -35,7 +35,6 @@ class AnchorGenerator(nn.Module):
         super(AnchorGenerator, self).__init__()
 
         if not isinstance(sizes[0], (list, tuple)):
-            # TODO change this
             sizes = tuple((s,) for s in sizes)
         if not isinstance(aspect_ratios[0], (list, tuple)):
             aspect_ratios = (aspect_ratios,) * len(sizes)
@@ -398,21 +397,14 @@ class RegionProposalNetwork(torch.nn.Module):
         objectness, pred_bbox_deltas = self.head(features)
         if first:
             return objectness, pred_bbox_deltas
-        #else:
-        #    print(objectness[0].shape)
-        #if len(features)>=128:
-        #    return pred_bbox_deltas, objectness
-        #else:
-        #    objectness, pred_bbox_deltas = resource
+
         anchors = self.anchor_generator(images, features)
 
         num_images = len(anchors)
         num_anchors_per_level = [o[0].numel() for o in objectness]
         objectness, pred_bbox_deltas = \
             concat_box_prediction_layers(objectness, pred_bbox_deltas)
-        # apply pred_bbox_deltas to anchors to obtain the decoded proposals
-        # note that we detach the deltas because Faster R-CNN do not backprop through
-        # the proposals
+
         proposals = self.box_coder.decode(pred_bbox_deltas.detach(), anchors)
         proposals = proposals.view(num_images, -1, 4)
         boxes, scores = self.filter_proposals(proposals, objectness, images.image_sizes, num_anchors_per_level)
@@ -429,5 +421,3 @@ class RegionProposalNetwork(torch.nn.Module):
             }
         
         return boxes, scores
-        
-        #return [0], [0]

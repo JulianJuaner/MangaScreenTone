@@ -58,7 +58,7 @@ def cropresize():
 def gaussBlur(img, kern_size=(21,21)):
     return cv2.GaussianBlur(img, kern_size, 0)
 
-def getImage(filename, scale=1, mode=0):
+def getImage(filename, mode=0):
     src = cv2.imread(filename,1)
     if mode == 2:
         C, R = cropresize()
@@ -99,10 +99,7 @@ def Erosion(img, kernalSize=3):
 
 
 class DataDataset(data.Dataset):
-    def __init__(self, root, base=32, chnls=512, scale=1.0, mode='img', name='featureHalfNC', file_list=None, basic=0, length=-1):
-        #print(mode)
-        
-            #print('here is feature')
+    def __init__(self, root, mode='img', name='featureHalfNC', file_list=None, basic=0, length=-1):
         self.file_list = file_list
         self.feat = make_dataset(os.path.join(root,name))
         if file_list:
@@ -117,9 +114,6 @@ class DataDataset(data.Dataset):
         print('length:', self.len, os.path.join(root,name))
         self.basic = basic
         self.mode = mode
-        self.base = base
-        self.chnls = chnls
-        self.scale = scale
 
     def __getitem__(self, index):
         
@@ -127,20 +121,18 @@ class DataDataset(data.Dataset):
             if self.file_list:
                 filepath = self.feat[self.file_list[index]%self.len]
             else:
-                #print(index, self.len)
                 filepath = self.feat[index%self.len]
             if self.basic==1:
                 print(filepath)
-            return getImage(filepath, self.scale, self.basic)
+            return getImage(filepath, self.basic)
+
         elif self.mode=='none':
             return [0]
         elif 'feature_compress' in self.mode:
             rand1 = random.randint(0, self.len-1)
             rand2 = random.randint(0, 12000)
-            #print(rand1, rand2)
             feat1 = self.feat[rand1]
             feat2 = self.kernset[rand2]
-            #print(feat1, feat2)
             #--------------------------------
             if "resize" in self.mode:
                 img1 = getImage(feat1,1)
@@ -150,12 +142,10 @@ class DataDataset(data.Dataset):
             return [getImage(feat1,1,0), getImage(feat2,1,0)]
             
         else:
-            #filepath = self.data[index%self.len]
             filepath2 = self.feat[index%self.len]
             return [getFeature(filepath2)]
 
     def __len__(self):
         if self.file_list:
-            #print(len(self.file_list))
             return len(self.file_list)
         return self.len

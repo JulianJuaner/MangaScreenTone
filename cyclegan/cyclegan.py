@@ -76,15 +76,8 @@ class CYCLEGAN:
                     'D_A', 'D_B', 'perc_A', 'perc_B','G','D','cycle','identity','line']
         if opt.loss_mode == 'mask':
             self.loss_names = ['GAN_AB', 'GAN_BA', 'cycle_A', 'cycle_B', 'id_A', 'id_B', 'mask_A',\
-                     'mask_B', 'D_A', 'D_B', 'perc_A', 'perc_B','G','D','cycle','mask_','identity']#,'line']
-        # Image transformations
-        '''transforms_ = [
-            transforms.Resize(int(opt.img_height * 1.12), Image.BICUBIC),
-            transforms.CenterCrop((opt.img_height, opt.img_width)),
-            transforms.RandomHorizontalFlip(),
-            transforms.ToTensor(),
-            #transforms.Normalize([0.5], [0.5]),
-        ]'''
+                     'mask_B', 'D_A', 'D_B', 'perc_A', 'perc_B','G','D','cycle','mask_','identity']
+
         cuda = torch.cuda.is_available()
         self.Tensor = torch.cuda.FloatTensor if cuda else torch.Tensor
 
@@ -117,8 +110,7 @@ class CYCLEGAN:
         fake_B = self.G_AB(real_A)
         real_B = Variable(imgs["B"].type(self.Tensor))
         fake_A = self.G_BA(real_B)
-        # Arange images along x-axis
-        #print("real!:", real_A.shape)
+
         real_A = make_grid(real_A, nrow=5, padding=0, normalize=False)
         real_B = make_grid(real_B, nrow=5, padding=0, normalize=False)
         fake_A = make_grid(fake_A, nrow=5, padding=0, normalize=False)
@@ -127,7 +119,7 @@ class CYCLEGAN:
         # Arange images along y-axis
         image_grid = torch.cat((real_A, fake_B, real_B, fake_A), 1)
         R = image_grid.cpu().detach().numpy()
-        #print(white, R.transpose(1,2,0), np.min(R), np.max(R))
+        
         cv2.imwrite("images/%s/%s_%s.jpg" % (opt.outf, opt.outf, batches_done), R.transpose(1,2,0))
         self.train_writer.add_image('test result', image_grid, batches_done)
 
@@ -194,19 +186,16 @@ class CYCLEGAN:
                             os.mkdir(os.path.join(folder, sub, book, subbook))
                             #print(os.path.join(folder, sub, book, subbook))
                     except:
-                        print('no')
+                        print('no such book')
                         pass
-                #print(os.path.join(folder, sub, book))
-                
-                #print(os.path.join(folder, 'simline', book))
+
             except:
-                #print('oops')
                 pass
+
         print("making dataset...")
         dataset = TestDataset(os.path.join(folder, 'image'), opt)
         dataloader = torch.utils.data.DataLoader(dataset, batch_size=1,
-                                                shuffle=False, num_workers=1)
-        
+                                                shuffle=False, num_workers=1)  
         input_shape = (opt.channels, (1170//4)*4, (827//4)*4)
         print("start")
         self.G_BA = GeneratorResNet(input_shape, opt.n_residual_blocks)
@@ -298,23 +287,13 @@ class CYCLEGAN:
             fake_B = self.G_AB(real_A)
             real_B = Variable(imgs["B"].type(self.Tensor))
             fake_A = self.G_BA(real_B)
-            '''
-            # Arange images along x-axis
-            #print("real!:", real_A.shape)
-            real_A = make_grid(real_A, nrow=5, padding=0, normalize=False)
-            real_B = make_grid(real_B, nrow=5, padding=0, normalize=False)
-            fake_A = make_grid(fake_A, nrow=5, padding=0, normalize=False)
-            fake_B = make_grid(fake_B, nrow=5, padding=0, normalize=False)
-            '''
+
             # Arange images along y-axis
-            #image_grid = torch.cat((real_A, fake_B, real_B, fake_A), 1)
-            #RB = fake_B.cpu().detach().numpy().transpose(0,2,3,1)
             RA = fake_A.cpu().detach().numpy().transpose(0,2,3,1)
-            #print(white, R.transpose(1,2,0), np.min(R), np.max(R))
+
             for i in range(opt.batch_size):
-                #cv2.imwrite("images/%s/B/%s_%04d%d.jpg" % (opt.outf, opt.outf, index, i), RB[i])
                 cv2.imwrite("images/%s/A/%s_%03d%d.jpg" % (opt.outf, opt.outf, index, i), 255*RA[i])
-                #print(RA[i])
+
             sys.stdout.write(
                 "\r [Batch %d/%d]"
                 % (
@@ -447,20 +426,7 @@ class CYCLEGAN:
                 # GAN loss
                 fake_B = self.G_AB(real_A)
                 fake_A = self.G_BA(real_B)
-            
-                #MASKR = self.applymask(image=real_B, mask=real_B)
-                #MASKF = self.applymask(image=fake_A, mask=real_B, mode='fake')
-                #self.loss_line = criterion_line(MASKF, real_B)
-                #MASKR = self.applymask(image=real_A, mask=real_A)
-                #MASKF = self.applymask(image=fake_B, mask=real_A, mode='fake')
-                #self.loss_line = (self.loss_line + criterion_line(MASKF, MASKR)) / 2
-                '''if i%10==0:
-                    #loss_mask_ = 0
-                    #print(fake_B[0], real_A[0])
-                    SaveFirstImage(MASKF, 'MASKF.png')
-                    SaveFirstImage(MASKR, 'MASKR.png')
-                    SaveFirstImage(fake_A, 'A.png')
-                    #SaveFirstImage(fake_B, 'fake.png')'''
+
                 self.loss_GAN_AB = criterion_GAN(D_B(fake_B), valid)
                 self.loss_GAN_BA = criterion_GAN(D_A(fake_A), valid)
                 
